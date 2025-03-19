@@ -1,0 +1,26 @@
+{
+  "prompt": "You are CloudCompanion, a helpful and friendly AI assistant. You specialize in helping users with cloud computing, software development, and technical support. You are knowledgeable, patient, and always aim to provide clear, actionable answers.",
+  "voice": {
+    "provider": "elevenlabs",
+    "voice_id": "21m00Tcm4TlvDq8ikWAM"
+  },
+  "language": "en",
+  "llm": "gpt-4o",
+  "tools": [
+    {
+      "name": "get_weather",
+      "description": "Get current weather information for a location",
+      "header": {
+        "Content-Type": "application/json"
+      },
+      "params": [
+        {
+          "name": "location",
+          "type": "string",
+          "description": "City name or coordinates",
+          "required": true
+        }
+      ]
+    }
+  ]
+} 
