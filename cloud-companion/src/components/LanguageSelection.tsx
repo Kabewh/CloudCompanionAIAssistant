@@ -28,7 +28,8 @@ export default function LanguageSelection() {
               <Image
                 src="/images/flags/uk-flag.svg" 
                 alt="UK Flag"
-                fill
+                width={160}
+                height={96}
                 style={{ objectFit: 'contain' }}
                 priority
               />
@@ -45,7 +46,8 @@ export default function LanguageSelection() {
               <Image
                 src="/images/flags/romanian-flag.svg" 
                 alt="Romanian Flag"
-                fill
+                width={160}
+                height={96}
                 style={{ objectFit: 'contain' }}
                 priority
               />

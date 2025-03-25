@@ -2,19 +2,41 @@
 
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { Id } from "../../../convex/_generated/dataModel";
+
+// Define the Lead type to include the language field
+interface Lead {
+  _id: Id<"leads">;
+  _creationTime: number;
+  name: string;
+  budget: string;
+  authority: string;
+  needs: string;
+  timeframe: string;
+  createdAt: number;
+  language?: string; // Optional since it might not exist in older records
+}
 
 export default function Dashboard() {
-  const leads = useQuery(api.leads.getLeads);
+  const leads = useQuery(api.leads.getLeads) as Lead[] | undefined;
   const [prevLeadsCount, setPrevLeadsCount] = useState(0);
   const [notification, setNotification] = useState<{
     show: boolean;
     message: string;
   }>({ show: false, message: '' });
   
-  // Sort leads by createdAt in descending order (newest first)
-  const sortedLeads = leads ? [...leads].sort((a, b) => b.createdAt - a.createdAt) : [];
+  // Use useMemo to create a sorted copy of leads whenever the leads data changes
+  const sortedLeads = useMemo(() => {
+    if (!leads) return [];
+    
+    // Create a new sorted array with newest leads first
+    return [...leads].sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [leads]);
   
   // This effect will run when leads data changes
   useEffect(() => {
@@ -73,7 +95,7 @@ export default function Dashboard() {
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
+                  Lead / Language
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Budget
@@ -107,11 +129,26 @@ export default function Dashboard() {
                 return (
                   <tr key={lead._id}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {lead.name || 'N/A'}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {dateAdded}
+                      <div className="flex items-center">
+                        <div className="mr-3 h-5 w-8 relative">
+                          {lead.language && (
+                            <Image 
+                              src={`/images/flags/${lead.language === "romanian" ? "romanian-flag.svg" : "uk-flag.svg"}`}
+                              alt={`${lead.language === "romanian" ? "Romanian" : "English"} flag`}
+                              width={30}
+                              height={20}
+                              style={{ objectFit: 'contain' }}
+                            />
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {lead.name || 'N/A'}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {dateAdded}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
