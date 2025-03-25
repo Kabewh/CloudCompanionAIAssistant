@@ -10,6 +10,10 @@
 !.yarn/releases
 !.yarn/versions
 
+# pnpm specific
+.pnpm-store/
+.pnpm-debug.log*
+
 # testing
 /coverage
 
@@ -39,3 +43,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# sst
+.sst
+
+# open-next
+.open-next
