@@ -6,12 +6,19 @@ import { useState, useEffect, useRef } from 'react';
 // Define a proper type for the Millis client
 type MillisClient = ReturnType<typeof Millis.createClient>;
 
-export default function VoiceAgent() {
+interface VoiceAgentProps {
+  language?: string;
+}
+
+export default function VoiceAgent({ language = 'english' }: VoiceAgentProps) {
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [messages, setMessages] = useState<Array<{type: 'user' | 'agent', text: string}>>([]);
+  const [currentAgentResponse, setCurrentAgentResponse] = useState<string | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const msClientRef = useRef<MillisClient | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingMessageRef = useRef<HTMLDivElement>(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
@@ -37,7 +44,16 @@ export default function VoiceAgent() {
 
   useEffect(() => {
     scrollToBottom();
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
+
+  // Add a new effect to scroll when the current agent response updates
+  useEffect(() => {
+    if (currentAgentResponse) {
+      scrollToBottom();
+    }
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAgentResponse]);
 
   const checkMicrophonePermission = async () => {
     try {
@@ -68,14 +84,35 @@ export default function VoiceAgent() {
     });
 
     msClient.on("onaudio", () => {
+      // The agent is speaking - this event is triggered when audio is playing
+      setIsSpeaking(true);
     });
 
     msClient.on("onresponsetext", (text: string, payload: { is_final?: boolean }) => {
       console.log("Response text:", text, payload);
+      
+      // When we get any text update, show the text immediately as it's being spoken
+      // This way the text appears in real-time with the speech
+      setCurrentAgentResponse(text);
+      
+      // Only when the response is final, add it to the messages array
       if (payload.is_final) {
-        const agentMessage = { type: 'agent' as const, text };
-        setMessages(prev => [...prev, agentMessage]);
+        // The agent has finished speaking
+        setIsSpeaking(false);
+        
+        // Add a slight delay to allow users to see the completed text before
+        // it gets added to the message history
+        setTimeout(() => {
+          const agentMessage = { type: 'agent' as const, text };
+          setMessages(prev => [...prev, agentMessage]);
+          setCurrentAgentResponse(null);
+        }, 500);
       }
+    });
+
+    msClient.on("onspeechend", () => {
+      console.log("Agent speech ended");
+      setIsSpeaking(false);
     });
 
     msClient.on("ontranscript", (text: string, payload: { is_final?: boolean }) => {
@@ -123,7 +160,22 @@ export default function VoiceAgent() {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Use setTimeout to ensure this happens after the DOM has been updated
+    setTimeout(() => {
+      // If there's a typing message, scroll to that
+      if (currentAgentResponse && typingMessageRef.current) {
+        typingMessageRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end'
+        });
+      } else if (messagesEndRef.current) {
+        // Otherwise scroll to the end of messages
+        messagesEndRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end'
+        });
+      }
+    }, 10);
   };
 
   const startVoiceAgent = async () => {
@@ -143,13 +195,19 @@ export default function VoiceAgent() {
       // Create a complete configuration using all environment variables
       const apiKey = process.env.NEXT_PUBLIC_MILLIS_API_KEY;
       
+      // Select the appropriate agent ID based on the language
+      const agentId = language === 'romanian' 
+        ? process.env.NEXT_PUBLIC_MILLIS_ROMANIAN_AGENT_ID
+        : process.env.NEXT_PUBLIC_MILLIS_ENGLISH_AGENT_ID || process.env.NEXT_PUBLIC_MILLIS_AGENT_ID;
+      
       msClientRef.current.start({
         agent: {
-          agent_id: process.env.NEXT_PUBLIC_MILLIS_AGENT_ID,
+          agent_id: agentId,
         },
         metadata: {
           apiKey: apiKey,
-          useOpenAIProxy: process.env.NEXT_PUBLIC_USE_OPENAI_PROXY === 'true'
+          useOpenAIProxy: process.env.NEXT_PUBLIC_USE_OPENAI_PROXY === 'true',
+          language: language
         },
         include_metadata_in_prompt: true
       });
@@ -175,17 +233,38 @@ export default function VoiceAgent() {
     if (inputText.trim()) {
       const userMessage = { type: 'user' as const, text: inputText };
       setMessages(prev => [...prev, userMessage]);
-      
-      // Simulate agent response (in a real app, this would come from the Millis agent)
-      setTimeout(() => {
-        const agentMessage = { 
-          type: 'agent' as const, 
-          text: "I've received your message. How else can I help you today?" 
-        };
-        setMessages(prev => [...prev, agentMessage]);
-      }, 1000);
-      
       setInputText('');
+      
+      // Simulate agent typing with a letter-by-letter effect
+      const response = "I've received your message. How else can I help you today?";
+      let currentIndex = 0;
+      
+      // Clear any existing response
+      setCurrentAgentResponse("");
+      
+      // Simulate the agent speaking state
+      setIsSpeaking(true);
+      
+      // Type one character at a time with a small delay
+      const typingInterval = setInterval(() => {
+        if (currentIndex < response.length) {
+          setCurrentAgentResponse(response.substring(0, currentIndex + 1));
+          currentIndex++;
+        } else {
+          // When finished typing, add to messages and clear current response
+          clearInterval(typingInterval);
+          
+          // Agent has finished "speaking"
+          setIsSpeaking(false);
+          
+          // Wait a moment before adding the message to the history
+          setTimeout(() => {
+            const agentMessage = { type: 'agent' as const, text: response };
+            setMessages(prev => [...prev, agentMessage]);
+            setCurrentAgentResponse(null);
+          }, 500);
+        }
+      }, 50); // adjust speed of typing here
     }
   };
 
@@ -193,10 +272,14 @@ export default function VoiceAgent() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
       <div className="w-full max-w-2xl bg-white rounded-lg shadow-xl p-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Cloud Companion</h1>
+          <div className="flex items-center">
+            <h1 className="text-2xl font-bold text-gray-800">Cloud Companion</h1>
+          </div>
           <div className="flex items-center">
             {isListening && <div className="w-3 h-3 bg-red-500 rounded-full mr-2 animate-pulse"></div>}
-            <span className="text-sm text-gray-500">{isListening ? 'Listening...' : 'Not active'}</span>
+            <span className="text-sm text-gray-500">
+              {isSpeaking ? 'Speaking...' : isListening ? 'Listening...' : 'Not active'}
+            </span>
           </div>
         </div>
 
@@ -212,6 +295,17 @@ export default function VoiceAgent() {
               <p className="text-gray-800">{msg.text}</p>
             </div>
           ))}
+          
+          {/* Show the current response being typed */}
+          {currentAgentResponse && (
+            <div ref={typingMessageRef} className="p-3 rounded-lg bg-gray-200 mr-auto max-w-[80%]">
+              <p className="text-gray-800">
+                {currentAgentResponse}
+                {isSpeaking && <span className="animate-pulse">|</span>}
+              </p>
+            </div>
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
 

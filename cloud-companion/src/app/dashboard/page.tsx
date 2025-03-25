@@ -13,6 +13,9 @@ export default function Dashboard() {
     message: string;
   }>({ show: false, message: '' });
   
+  // Sort leads by createdAt in descending order (newest first)
+  const sortedLeads = leads ? [...leads].sort((a, b) => b.createdAt - a.createdAt) : [];
+  
   // This effect will run when leads data changes
   useEffect(() => {
     if (leads && leads.length > prevLeadsCount && prevLeadsCount > 0) {
@@ -98,7 +101,7 @@ export default function Dashboard() {
                 </tr>
               )}
               
-              {leads?.map((lead) => {
+              {sortedLeads.map((lead) => {
                 const dateAdded = new Date(lead.createdAt).toLocaleString();
                 
                 return (

@@ -1,6 +1,6 @@
 'use client';
 
-import VoiceAgent from '@/components/VoiceAgent';
+import LanguageSelection from '@/components/LanguageSelection';
 import Link from 'next/link';
 
 export default function Home() {
@@ -12,10 +12,7 @@ export default function Home() {
           View Leads Dashboard
         </Link>
       </div>
-      <VoiceAgent />
-      {/* <main className="flex min-h-screen flex-col items-center justify-between p-24">
-        {tasks?.map(({ _id, text }) => <div key={_id}>{text}</div>)}
-      </main> */}
+      <LanguageSelection />
     </div>
   );
 }
