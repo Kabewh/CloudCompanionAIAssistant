@@ -12,7 +12,7 @@ export default $config({
   },
 
   async run() {
-    const domainName = "ai-demo.tharro.io";
+    const domainName = "ai-demo.cloudcompanion.io";
     const zone = await aws.route53.getZone({
       name: domainName,
       privateZone: false,
