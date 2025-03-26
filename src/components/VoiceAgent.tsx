@@ -11,7 +11,6 @@ interface VoiceAgentProps {
 }
 
 export default function VoiceAgent({ language = 'english' }: VoiceAgentProps) {
-  const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [messages, setMessages] = useState<Array<{type: 'user' | 'agent', text: string}>>([]);
   const [currentAgentResponse, setCurrentAgentResponse] = useState<string | null>(null);
@@ -228,46 +227,6 @@ export default function VoiceAgent({ language = 'english' }: VoiceAgentProps) {
     setConnectionError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputText.trim()) {
-      const userMessage = { type: 'user' as const, text: inputText };
-      setMessages(prev => [...prev, userMessage]);
-      setInputText('');
-      
-      // Simulate agent typing with a letter-by-letter effect
-      const response = "I've received your message. How else can I help you today?";
-      let currentIndex = 0;
-      
-      // Clear any existing response
-      setCurrentAgentResponse("");
-      
-      // Simulate the agent speaking state
-      setIsSpeaking(true);
-      
-      // Type one character at a time with a small delay
-      const typingInterval = setInterval(() => {
-        if (currentIndex < response.length) {
-          setCurrentAgentResponse(response.substring(0, currentIndex + 1));
-          currentIndex++;
-        } else {
-          // When finished typing, add to messages and clear current response
-          clearInterval(typingInterval);
-          
-          // Agent has finished "speaking"
-          setIsSpeaking(false);
-          
-          // Wait a moment before adding the message to the history
-          setTimeout(() => {
-            const agentMessage = { type: 'agent' as const, text: response };
-            setMessages(prev => [...prev, agentMessage]);
-            setCurrentAgentResponse(null);
-          }, 500);
-        }
-      }, 50); // adjust speed of typing here
-    }
-  };
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
       <div className="w-full max-w-2xl bg-white rounded-lg shadow-xl p-6">
@@ -309,7 +268,7 @@ export default function VoiceAgent({ language = 'english' }: VoiceAgentProps) {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="flex flex-col gap-4 items-center justify-center">
+        <div className="flex items-center justify-center">
           <button
             onClick={isListening ? stopVoiceAgent : startVoiceAgent}
             className={`w-full py-3 rounded-lg ${isListening 
@@ -319,23 +278,6 @@ export default function VoiceAgent({ language = 'english' }: VoiceAgentProps) {
           >
             {isListening ? 'Stop Listening' : 'Start Voice Agent'}
           </button>
-          
-          <form onSubmit={handleSubmit} className="w-full flex gap-2">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500"
-            />
-            <button
-              type="submit"
-              className="px-6 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-50"
-              disabled={!inputText.trim()}
-            >
-              Send
-            </button>
-          </form>
         </div>
       </div>
     </div>
