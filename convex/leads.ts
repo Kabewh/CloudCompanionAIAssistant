@@ -32,7 +32,6 @@ export const createLead = mutation({
 export const getLeads = query({
   args: {},
   handler: async (ctx) => {
-    // Fetch all leads 
     return await ctx.db
       .query("leads")
       .collect();

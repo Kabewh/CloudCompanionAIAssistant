@@ -2,6 +2,13 @@
 
 import Millis from '@millisai/web-sdk';
 import { useState, useEffect, useRef } from 'react';
+import { Mic, MicOff, Cloud, BarChart } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 // Define a proper type for the Millis client
 type MillisClient = ReturnType<typeof Millis.createClient>;
@@ -228,58 +235,96 @@ export default function VoiceAgent({ language = 'english' }: VoiceAgentProps) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow-xl p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-gray-800">Cloud Companion</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+      <Card className="w-full max-w-2xl shadow-xl">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 bg-primary">
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                <Cloud className="h-6 w-6" />
+              </AvatarFallback>
+            </Avatar>
+            <CardTitle className="text-xl">Cloud Companion</CardTitle>
           </div>
-          <div className="flex items-center">
-            {isListening && <div className="w-3 h-3 bg-red-500 rounded-full mr-2 animate-pulse"></div>}
-            <span className="text-sm text-gray-500">
-              {isSpeaking ? 'Speaking...' : isListening ? 'Listening...' : 'Not active'}
-            </span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild className="h-8 shadow-sm">
+              <Link href="/dashboard">
+                <BarChart className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">View Leads</span>
+                <span className="inline sm:hidden">Leads</span>
+              </Link>
+            </Button>
+            <div className="text-sm text-muted-foreground flex items-center ml-1">
+              {isListening && <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-1"></div>}
+              <span className="hidden sm:inline">{isSpeaking ? 'Speaking...' : isListening ? 'Listening...' : 'Not active'}</span>
+            </div>
           </div>
-        </div>
+        </CardHeader>
 
         {connectionError && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+          <div className="mx-6 mb-3 p-3 bg-destructive/15 text-destructive text-sm rounded-md">
             {connectionError}
           </div>
         )}
 
-        <div className="space-y-4 mb-6 h-96 overflow-y-auto p-4 bg-gray-50 rounded-lg">
-          {messages.map((msg, idx) => (
-            <div key={idx} className={`p-3 rounded-lg ${msg.type === 'user' ? 'bg-blue-100 ml-auto max-w-[80%]' : 'bg-gray-200 mr-auto max-w-[80%]'}`}>
-              <p className="text-gray-800">{msg.text}</p>
-            </div>
-          ))}
-          
-          {/* Show the current response being typed */}
-          {currentAgentResponse && (
-            <div ref={typingMessageRef} className="p-3 rounded-lg bg-gray-200 mr-auto max-w-[80%]">
-              <p className="text-gray-800">
-                {currentAgentResponse}
-                {isSpeaking && <span className="animate-pulse">|</span>}
-              </p>
-            </div>
-          )}
-          
-          <div ref={messagesEndRef} />
-        </div>
+        <CardContent>
+          <div className="space-y-4 h-[400px] overflow-y-auto p-4 rounded-md bg-muted/50">
+            {messages.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                Start the voice agent and begin your conversation
+              </div>
+            )}
+            
+            {messages.map((msg, idx) => (
+              <div 
+                key={idx} 
+                className={cn(
+                  "p-3 rounded-lg max-w-[80%]",
+                  msg.type === 'user' 
+                    ? "ml-auto bg-primary text-primary-foreground" 
+                    : "mr-auto bg-card border shadow-sm"
+                )}
+              >
+                <p className="text-sm">{msg.text}</p>
+              </div>
+            ))}
+            
+            {/* Show the current response being typed */}
+            {currentAgentResponse && (
+              <div 
+                ref={typingMessageRef} 
+                className="p-3 rounded-lg bg-card border shadow-sm mr-auto max-w-[80%]"
+              >
+                <p className="text-sm">
+                  {currentAgentResponse}
+                  {isSpeaking && <span className="ml-1 animate-pulse">|</span>}
+                </p>
+              </div>
+            )}
+            
+            <div ref={messagesEndRef} />
+          </div>
+        </CardContent>
 
-        <div className="flex items-center justify-center">
-          <button
+        <CardFooter className="px-6 py-4 border-t">
+          <Button 
             onClick={isListening ? stopVoiceAgent : startVoiceAgent}
-            className={`w-full py-3 rounded-lg ${isListening 
-              ? 'bg-red-500 hover:bg-red-600' 
-              : 'bg-green-500 hover:bg-green-600'} 
-              text-white font-medium transition-colors`}
+            className="w-full" 
+            variant={isListening ? "destructive" : "default"}
+            size="lg"
           >
-            {isListening ? 'Stop Listening' : 'Start Voice Agent'}
-          </button>
-        </div>
-      </div>
+            {isListening ? (
+              <>
+                <MicOff className="mr-2 h-4 w-4" /> Stop Listening
+              </>
+            ) : (
+              <>
+                <Mic className="mr-2 h-4 w-4" /> Start Voice Agent
+              </>
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 } 

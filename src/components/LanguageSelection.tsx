@@ -2,6 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Globe, Languages } from 'lucide-react';
 
 export default function LanguageSelection() {
   const router = useRouter();
@@ -12,50 +15,96 @@ export default function LanguageSelection() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow-xl p-6">
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
-          Select Your Language / Selectați Limba
-        </h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 md:p-8">
+      <Card className="w-full max-w-2xl shadow-xl border-border/40">
+        <CardHeader className="text-center pb-3 border-b">
+          <div className="flex items-center justify-center mb-2">
+            <div className="bg-primary/10 p-2 rounded-full">
+              <Globe className="h-6 w-6 text-primary" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl">Cloud Companion</CardTitle>
+          <p className="text-muted-foreground mt-1 text-sm">Select Your Language / Selectați Limba</p>
+        </CardHeader>
+        
+        <CardContent className="py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+            {/* English option */}
+            <LanguageCard 
+              language="english"
+              label="English"
+              flagSrc="/images/flags/us-flag.svg"
+              onSelect={selectLanguage}
+            />
 
-        <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
-          {/* English option */}
-          <button
-            onClick={() => selectLanguage('english')}
-            className="w-full md:w-64 h-64 flex flex-col items-center justify-center bg-white hover:bg-gray-50 border-2 border-gray-200 rounded-xl p-6 transition-all hover:scale-105 hover:shadow-lg cursor-pointer"
-          >
-            <div className="w-40 h-24 relative mb-4 overflow-hidden rounded-md border border-gray-200 cursor-pointer">
+            {/* Romanian option */}
+            <LanguageCard 
+              language="romanian"
+              label="Română"
+              flagSrc="/images/flags/romanian-flag.svg"
+              onSelect={selectLanguage}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+interface LanguageCardProps {
+  language: string;
+  label: string;
+  flagSrc: string;
+  onSelect: (language: string) => void;
+}
+
+function LanguageCard({ language, label, flagSrc, onSelect }: LanguageCardProps) {
+  return (
+    <div 
+      className="relative group h-full cursor-pointer"
+      onClick={() => onSelect(language)}
+    >
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-xl"></div>
+      <Card className="h-full overflow-hidden border-border/30 transition-all duration-300 group-hover:border-primary/30 group-hover:shadow-md hover:cursor-pointer">
+        <CardContent className="p-6 flex flex-col items-center">
+          <div className="w-full h-24 relative mb-6 flex items-center justify-center">
+            <div className="relative w-40 h-24 overflow-hidden rounded-md shadow-sm border border-border/40 flex items-center justify-center">
               <Image
-                src="/images/flags/uk-flag.svg" 
-                alt="UK Flag"
-                width={160}
-                height={96}
-                style={{ objectFit: 'contain' }}
+                src={flagSrc}
+                alt={`${label} Flag`}
+                fill
+                style={{ objectFit: 'cover' }}
                 priority
+                className="drop-shadow-sm"
+                onError={(e) => {
+                  // If the image fails to load, display a fallback
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `<div class="text-center w-full">${label}</div>`;
+                  }
+                }}
               />
             </div>
-            <span className="text-2xl font-semibold text-gray-800">English</span>
-          </button>
-
-          {/* Romanian option */}
-          <button
-            onClick={() => selectLanguage('romanian')}
-            className="w-full md:w-64 h-64 flex flex-col items-center justify-center bg-white hover:bg-gray-50 border-2 border-gray-200 rounded-xl p-6 transition-all hover:scale-105 hover:shadow-lg cursor-pointer"
+          </div>
+          
+          <h3 className="text-xl font-medium text-foreground group-hover:text-primary transition-colors duration-300">{label}</h3>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="mt-4 transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(language);
+            }}
           >
-            <div className="w-40 h-24 relative mb-4 overflow-hidden rounded-md border border-gray-200 cursor-pointer">
-              <Image
-                src="/images/flags/romanian-flag.svg" 
-                alt="Romanian Flag"
-                width={160}
-                height={96}
-                style={{ objectFit: 'contain' }}
-                priority
-              />
-            </div>
-            <span className="text-2xl font-semibold text-gray-800">Română</span>
-          </button>
-        </div>
-      </div>
+            <Languages className="h-4 w-4 mr-2" />
+            Select
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 } 
