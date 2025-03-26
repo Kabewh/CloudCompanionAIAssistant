@@ -36,13 +36,26 @@ export const webhookHandler = httpAction(async (ctx, request) => {
     const needs = body.needs || "Not specified";
     const timeframe = body.timeframe || "Not specified";
     
-    // Store the lead in the database
+    // If we have a token, we can retrieve user data associated with it
+    const token = body.token;
+    
+    // Extract any user data from the request if available
+    const fullName = body.fullName || undefined;
+    const email = body.email || undefined;
+    const language = body.language || undefined;
+    
+    // Store the lead in the database with user data if available
     const result = await ctx.runMutation(api.leads.createLead, {
       name,
       budget,
       authority,
       needs,
-      timeframe
+      timeframe,
+      // Include optional user data
+      fullName,
+      email,
+      language,
+      sessionToken: token
     });
     
     return new Response(JSON.stringify({ 
